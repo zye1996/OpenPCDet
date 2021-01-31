@@ -212,6 +212,7 @@ class PointNet2MSG_FPS(nn.Module):
             batch_dict['point_coords'] = torch.cat((batch_idx[:, None].float(), l_xyz[0].view(-1, 3)), dim=1)
         return batch_dict
 
+
 class PointNet2Backbone(nn.Module):
     """
     DO NOT USE THIS CURRENTLY SINCE IT MAY HAVE POTENTIAL BUGS, 20200723

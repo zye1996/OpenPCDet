@@ -7,7 +7,7 @@ from pcdet.utils import common_utils
 import torch
 import numpy as np
 
-cfg_file = "../tools/cfgs/kitti_models/ssd3d.yaml"
+cfg_file = "../tools/cfgs/kitti_models/pointrcnn_bb_replaced.yaml"
 cfg_from_yaml_file(cfg_file, cfg)
 print(cfg['MODEL']["BACKBONE_3D"])
 cfg_backbone = cfg['MODEL']["BACKBONE_3D"]
@@ -47,11 +47,16 @@ dummy_input = dict(
     points=torch.cat([batch_idx, points], dim=1)
 )
 backbone = PointNet2MSG_FPS(cfg_backbone, input_channels=4).cuda()
+print(backbone)
+result = backbone(data)
 
+for k, v in result.items():
+    if isinstance(v, torch.Tensor):
+        print(k, v.shape)
+
+'''
 cfg_pfe = cfg['MODEL']["PFE"]
 cfg_pfe.pop('NAME')
-
-result = backbone(data)
 
 for k, v in result.items():
     if isinstance(v, torch.Tensor):
@@ -71,3 +76,4 @@ head = PointHeadBox3DSSD(1, 512, cfg_head).cuda()
 
 head_result = head(pfe_result)
 print(head_result)
+'''

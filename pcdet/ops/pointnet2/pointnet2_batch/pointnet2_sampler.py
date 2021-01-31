@@ -75,6 +75,8 @@ class Points_Sampler(nn.Module):
         # FPS would be applied to different fps_mod in the list,
         # so the length of the num_point should be equal to
         # fps_mod_list and fps_sample_range_list.
+        if isinstance(num_point, int):
+            num_point = [num_point]
         assert len(num_point) == len(fps_mod_list) == len(
             fps_sample_range_list)
         self.num_point = num_point
