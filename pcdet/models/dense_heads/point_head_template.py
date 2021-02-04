@@ -97,7 +97,7 @@ class PointHeadTemplate(nn.Module):
             else:
                 raise NotImplementedError
 
-            gt_box_of_fg_points = gt_boxes[k][box_idxs_of_pts[fg_flag]]
+            gt_box_of_fg_points = gt_boxes[k][box_idxs_of_pts[fg_flag]] # only foreground is considered
             point_cls_labels_single[fg_flag] = 1 if self.num_class == 1 else gt_box_of_fg_points[:, -1].long()
             point_cls_labels[bs_mask] = point_cls_labels_single
             gt_boxes_of_fg_points.append(gt_box_of_fg_points)

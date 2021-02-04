@@ -13,11 +13,12 @@ __all__ = {
     'PVRCNN': PVRCNN,
     'PointPillar': PointPillar,
     'PointRCNN': PointRCNN,
-    'SSD3D': SSD3D
+    'SSD3D': SSD3D,
 }
 
 
 def build_detector(model_cfg, num_class, dataset):
+    print(__all__)
     model = __all__[model_cfg.NAME](
         model_cfg=model_cfg, num_class=num_class, dataset=dataset
     )
