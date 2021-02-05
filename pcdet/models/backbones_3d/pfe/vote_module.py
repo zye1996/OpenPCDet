@@ -68,11 +68,10 @@ class VoteModule(nn.Module):
 
         xyz = batch_dict['point_coords'].view(batch_size, -1, 4)[..., 1:].contiguous()
         features = batch_dict['point_features'].view(batch_size, -1, batch_dict['point_features'].shape[-1]).contiguous()
-        batch_idx = batch_dict['batch_idx']
-        return xyz, features, batch_idx
+        #batch_idx = batch_dict['batch_idx']
+        return xyz, features# , batch_idx
 
     def forward(self, batch_dict):
-    #def forward(self, xyz, features):
         """
         Args:
             batch_dict:
@@ -92,7 +91,7 @@ class VoteModule(nn.Module):
         """
 
         batch_size = batch_dict['batch_size']
-        xyz, features, batch_idx = self.extract_input(batch_dict)
+        xyz, features = self.extract_input(batch_dict)
         features = features.permute(0, 2, 1).contiguous()
 
         if isinstance(self.num_points, list):
@@ -127,33 +126,9 @@ class VoteModule(nn.Module):
                                                                        features=features,
                                                                        new_xyz=vote_points)
         aggregated_features = self.conv_out(aggregated_features)
-        # aggregated_features = aggregated_features.transpose(2, 1).contiguous()  # (B, N, C)
 
-        # batch_idx_vote = torch.arange(batch_size, device=vote_points.device).view(-1, 1).repeat(1, vote_points.shape[1]).view(-1)
-
-        # return aggregated_points, aggregated_features, seed_points, seed_offset
-
-        #batch_dict['vote_features'] = vote_features.view(-1, vote_features.shape[-1])  # (B*N, C)
-        #batch_dict['vote_points'] = torch.cat((batch_idx_vote[:, None].float(), vote_points.view(-1, 3)), dim=1)  # (B*N, 4)
-        #batch_dict['vote_offsets'] = torch.cat((batch_idx_vote[:, None].float(), limited_offset.view(-1, 3)), dim=1)
-
-        #batch_idx_aggre = torch.arange(batch_size, device=aggregated_points.device).view(-1, 1).repeat(1, aggregated_points.shape[1]).view(-1)
-        #batch_dict['aggregated_features'] = aggregated_features.view(-1, aggregated_features.shape[-1])
-        #batch_dict['aggregated_points'] = torch.cat((batch_idx_aggre[:, None].float(), aggregated_points.view(-1, 3)), dim=1)
-
-        # batch_dict['vote_features'] = vote_features.view(-1, vote_features.shape[-1])  # (B*N, C)
-        # batch_dict['vote_points'] = torch.cat((batch_idx_vote[:, None].float(), vote_points.view(-1, 3)), dim=1)  # (B*N, 4)
-        # batch_dict['ctr_offsets'] = torch.cat((batch_idx_vote[:, None].float(), limited_offset.view(-1, 3)), dim=1)
-        # batch_dict['centers_origin'] = torch.cat((batch_idx_vote[:, None].float(), seed_points.view(-1, 3)), dim=1)
-
-        # batch_idx_aggre = torch.arange(batch_size, device=aggregated_points.device).view(-1, 1).repeat(1, aggregated_points.shape[1]).view(-1)
-        # batch_dict['centers_features'] = aggregated_features.view(-1, aggregated_features.shape[-1])
-        # batch_dict['centers'] = torch.cat((batch_idx_aggre[:, None].float(), aggregated_points.view(-1, 3)), dim=1)
-        # batch_dict['ctr_batch_idx'] = batch_idx_aggre
-        # return batch_dict
-
-        ctr_batch_idx = batch_idx.view(batch_size, -1)[:, :seed_offset.shape[1]]
-        ctr_batch_idx = ctr_batch_idx.contiguous().view(-1)
+        # pack output
+        ctr_batch_idx = torch.arange(batch_size, device=seed_offset.device).view(-1, 1).repeat(1, seed_offset.shape[1]).view(-1)
         batch_dict['ctr_offsets'] = torch.cat((ctr_batch_idx[:, None].float(), seed_offset.contiguous().view(-1, 3)), dim=1)
         batch_dict['centers'] = torch.cat((ctr_batch_idx[:, None].float(), aggregated_points.contiguous().view(-1, 3)), dim=1)
         batch_dict['centers_origin'] = torch.cat((ctr_batch_idx[:, None].float(), seed_points.contiguous().view(-1, 3)), dim=1)

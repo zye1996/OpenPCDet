@@ -109,7 +109,6 @@ class PointNet2MSG_FPS(nn.Module):
         self.aggregation_mlps = nn.ModuleList()
         channel_in = input_channels - 3
 
-
         self.num_points_each_layer = []
         skip_channel_list = [input_channels - 3]
         for k in range(self.model_cfg.SA_CONFIG.NPOINTS.__len__()):
@@ -143,10 +142,6 @@ class PointNet2MSG_FPS(nn.Module):
             channel_out = self.model_cfg.AGGREGATION_CHANNELS[k]
             skip_channel_list.append(channel_out)
             channel_in = self.model_cfg.AGGREGATION_CHANNELS[k]
-
-
-        # add VoteModule
-        # self.vote_module = vote_module.VoteModule(model_cfg=model_cfg.VOTE_CONFIG)
 
         # add FP modules
         self.FP_modules = nn.ModuleList()
@@ -202,12 +197,6 @@ class PointNet2MSG_FPS(nn.Module):
             l_xyz.append(li_xyz)
             l_features.append(li_features)
 
-        # Todo: test purpose only add vote module here
-        # VoteModule
-        # li_xyz, li_features, seed_xyz, offset = self.vote_module(l_xyz[-1], l_features[-1])
-        # l_xyz.append(li_xyz)
-        # l_features.append(li_features)
-
         # FP modules feed forward
         for i in range(-1, -(len(self.FP_modules) + 1), -1):
             l_features[i - 1] = self.FP_modules[i](
@@ -219,22 +208,7 @@ class PointNet2MSG_FPS(nn.Module):
             batch_dict['point_features'] = point_features.view(-1, point_features.shape[-1])
             ctr_batch_idx = torch.arange(batch_size, device=l_xyz[-1].device).view(-1, 1).repeat(1, l_xyz[-1].shape[1]).view(-1)
             batch_dict['point_coords'] = torch.cat((ctr_batch_idx[:, None].float(), l_xyz[-1].view(-1, 3)), dim=1)
-            batch_dict['batch_idx'] = batch_idx
-            # point_features = l_features[-1].permute(0, 2, 1).contiguous()  # (B, N, C)
-            # ctr_batch_idx = torch.arange(batch_size, device=l_xyz[-1].device).view(-1, 1).repeat(1, l_xyz[-1].shape[1]).view(-1)
-            #batch_dict['point_features'] = point_features.view(-1, point_features.shape[-1])
-            #batch_dict['point_coords'] = torch.cat((batch_idx[:, None].float(), l_xyz[-1].view(-1, 3)), dim=1)
-            #batch_dict['seed_point_coords'] = torch.cat((batch_idx[:, None].float(), seed_xyz.view(-1, 3)), dim=1)
-            #batch_dict['vote_offset'] = torch.cat((batch_idx[:, None].float(), offset.contiguous().view(-1, 3)), dim=1)
-            #ctr_batch_idx = batch_idx.view(batch_size, -1)[:, :offset.shape[1]]
-            #ctr_batch_idx = ctr_batch_idx.contiguous().view(-1)
-            #batch_dict['ctr_offsets'] = torch.cat((ctr_batch_idx[:, None].float(), offset.contiguous().view(-1, 3)), dim=1)
-            #batch_dict['centers'] = torch.cat((ctr_batch_idx[:, None].float(), l_xyz[-1].contiguous().view(-1, 3)), dim=1)
-            #batch_dict['centers_origin'] = torch.cat((ctr_batch_idx[:, None].float(), seed_xyz.contiguous().view(-1, 3)), dim=1)
-            #center_features = l_features[-1].permute(0, 2, 1).contiguous().view(-1, l_features[-1].shape[1])
-            #batch_dict['centers_features'] = center_features
-            # print(center_features.shape)
-            #batch_dict['ctr_batch_idx'] = ctr_batch_idx
+            # batch_dict['batch_idx'] = batch_idx
         else:
             point_features = l_features[0].permute(0, 2, 1).contiguous()  # (B, N, C)
             batch_dict['point_features'] = point_features.view(-1, point_features.shape[-1])
