@@ -14,7 +14,7 @@ from torchvision import transforms
 class Painter:
     def __init__(self):
         self.root_split_path = "../../../data/kitti/training/"
-        self.save_path = "../../../data/kitti/training/velodyne_painted_mono/"
+        self.save_path = "/home/yzy/PycharmProjects/OpenPCDet/data/kitti/training/velodyne_painted_mono_color/"
         self.model = torch.hub.load('pytorch/vision:v0.8.0', 'deeplabv3_resnet101', pretrained=True)
         self.model.eval()
         if torch.cuda.is_available():
@@ -59,7 +59,7 @@ class Painter:
         output_reassign[:, :, 3] = output_permute[:, :, 15]  # person
         output_reassign_softmax = sf(output_reassign)
 
-        return output_reassign_softmax
+        return output_reassign_softmax, np.array(input_image)
 
     def get_label(self, idx):
         label_file = self.root_split_path + 'label_2/' + ('%s.txt' % idx)
@@ -111,7 +111,7 @@ class Painter:
 
         return lidar_cam_coords
 
-    def augment_lidar_class_scores(self, class_scores, lidar_raw, projection_mats):
+    def augment_lidar_class_scores(self, class_scores, lidar_raw, projection_mats, image_rgb=None):
         """
         Projects lidar points onto segmentation map, appends class score each point projects onto.
         """
@@ -131,17 +131,19 @@ class Painter:
         points_projected_on_mask = points_projected_on_mask[
             true_where_point_on_img]  # filter out points that don't project to image
         lidar_cam_coords = lidar_cam_coords[true_where_point_on_img]
-        points_projected_on_mask = np.floor(points_projected_on_mask).astype(
-            int)  # using floor so you don't end up indexing num_rows+1th row or col
-        points_projected_on_mask = points_projected_on_mask[:,
-                                   :2]  # drops homogenous coord 1 from every point, giving (N_pts, 2) int array
+        points_projected_on_mask = np.floor(points_projected_on_mask).astype(int)  # using floor so you don't end up indexing num_rows+1th row or col
+        points_projected_on_mask = points_projected_on_mask[:, :2]  # drops homogenous coord 1 from every point, giving (N_pts, 2) int array
 
         # indexing oreder below is 1 then 0 because points_projected_on_mask is x,y in image coords which is cols, rows while class_score shape is (rows, cols)
         # socre dimesion: point_scores.shape[2] TODO!!!!
-        point_scores = class_scores[points_projected_on_mask[:, 1], points_projected_on_mask[:, 0]].reshape(-1,
-                                                                                                            class_scores.shape[
-                                                                                                                2])
-        augmented_lidar = np.concatenate((lidar_raw[true_where_point_on_img], point_scores), axis=1)
+        point_scores = class_scores[points_projected_on_mask[:, 1], points_projected_on_mask[:, 0]].reshape(-1, class_scores.shape[2])
+        if image_rgb is not None:
+            point_colors = (image_rgb[points_projected_on_mask[:, 1], points_projected_on_mask[:, 0]].reshape(-1,
+                                                                                                             3).astype(
+                np.float32) - 128.0) / 255
+            augmented_lidar = np.concatenate((lidar_raw[true_where_point_on_img], point_scores, point_colors), axis=1)
+        else:
+            augmented_lidar = np.concatenate((lidar_raw[true_where_point_on_img], point_scores), axis=1)
         augmented_lidar = self.create_cyclist(augmented_lidar)
 
         return augmented_lidar
@@ -227,12 +229,14 @@ class Painter:
             points = self.get_lidar(sample_idx)
 
             # add socres here
-            scores_from_cam = self.get_score(sample_idx, "image_2/")
-            # scores_from_cam_r = self.get_score(sample_idx, "image_3/")
+            scores_from_cam, img_l = self.get_score(sample_idx, "image_2/")
+            # scores_from_cam_r, img_r = self.get_score(sample_idx, "image_3/")
             # points become [points, scores]
             calib_info = self.get_calib_fromfile(sample_idx)
 
-            points = self.augment_lidar_class_scores(scores_from_cam, points, calib_info)
+            points = self.augment_lidar_class_scores(scores_from_cam, points, calib_info, img_l)
+            #points = self.augment_lidar_class_scores_both(scores_from_cam_r.cpu().numpy(),
+            #                                              scores_from_cam.cpu().numpy(), points, calib_info)
             np.save(self.save_path + ("%06d.npy" % idx), points)
 
 

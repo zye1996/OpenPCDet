@@ -14,7 +14,7 @@ from .kitti_dataset import KittiDataset
 class KittiDatasetPainted(KittiDataset):
 
     def get_lidar(self, idx):
-        lidar_file = self.root_split_path / 'velodyne_painted_mono' / ('%s.npy' % idx)
+        lidar_file = self.root_split_path / 'velodyne_painted_mono_color' / ('%s.npy' % idx)
         assert lidar_file.exists()
         return np.load(lidar_file)
 
