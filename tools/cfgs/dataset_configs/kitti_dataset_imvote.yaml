@@ -1,5 +1,5 @@
-DATASET: 'KittiDatasetPainted'
-DATA_PATH: '../data/kitti'
+DATASET: 'KittiDatasetImVote'
+DATA_PATH: '/home/yzy/PycharmProjects/OpenPCDet/data/kitti'
 
 POINT_CLOUD_RANGE: [0, -40, -3, 70.4, 40, 1]
 
@@ -28,8 +28,8 @@ DATA_AUGMENTOR:
              filter_by_difficulty: [-1],
           }
 
-          SAMPLE_GROUPS: ['Car:20', 'Pedestrian:15', 'Cyclist:15']
-          NUM_POINT_FEATURES: 8
+          SAMPLE_GROUPS: ['Car:20','Pedestrian:15', 'Cyclist:15']
+          NUM_POINT_FEATURES: 4
           DATABASE_WITH_FAKELIDAR: False
           REMOVE_EXTRA_WIDTH: [0.0, 0.0, 0.0]
           LIMIT_WHOLE_SCENE: True
@@ -46,8 +46,8 @@ DATA_AUGMENTOR:
 
 POINT_FEATURE_ENCODING: {
     encoding_type: absolute_coordinates_encoding,
-    used_feature_list: ['x', 'y', 'z', 'intensity', 's0', 's1', 's2', 's3'],
-    src_feature_list: ['x', 'y', 'z', 'intensity', 's0', 's1', 's2', 's3'],
+    used_feature_list: ['x', 'y', 'z', 'intensity'],
+    src_feature_list: ['x', 'y', 'z', 'intensity'],
 }
 
 
@@ -67,4 +67,10 @@ DATA_PROCESSOR:
       MAX_NUMBER_OF_VOXELS: {
         'train': 16000,
         'test': 40000
+      }
+
+    - NAME: sample_points
+      NUM_POINTS: {
+        'train': 16384,
+        'test': 16384
       }

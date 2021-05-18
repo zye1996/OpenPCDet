@@ -1,7 +1,7 @@
 CLASS_NAMES: ['Car', 'Pedestrian', 'Cyclist']
 
 DATA_CONFIG:
-  _BASE_CONFIG_: /home/yzy/PycharmProjects/OpenPCDet/tools/cfgs/dataset_configs/kitti_dataset.yaml
+  _BASE_CONFIG_: /home/yzy/PycharmProjects/OpenPCDet/tools/cfgs/dataset_configs/kitti_dataset_imvote.yaml
 
   DATA_PROCESSOR:
     -   NAME: mask_points_and_boxes_outside_range
@@ -20,7 +20,7 @@ DATA_CONFIG:
         }
 
 MODEL:
-  NAME: SSD3D
+  NAME: SSD3D_imvote
 
   BACKBONE_3D:
     NAME: PointNet2MSG_FPS
@@ -38,9 +38,10 @@ MODEL:
     FP_MLPS: []
 
   PFE:
-    NAME: VoteModule
+    NAME: ImVoteModule
     NUM_POINTS: [256]
     NUM_INPUT_FEATURES: 256
+    NUM_IMG_FEATURES: 256
     MLPS: [128]
     VOTE_RANGE: [3.0, 3.0, 2.0]
     WITH_RES_FEATURE: False
@@ -49,12 +50,17 @@ MODEL:
     AGGREGATION_RADIUS: [4.8, 6.4]
     AGGREGATION_NSAMPLES: [16, 32]
 
+
   POINT_HEAD:
-    NAME: PointHeadBox3DSSD
+    NAME: PointHeadBoxImVote
     CLS_FC: [ 256, 256 ]
     REG_FC: [ 256, 256 ]
+    NUM_IMG_FEATURES: 256
     CLASS_AGNOSTIC: False
     USE_POINT_FEATURES_BEFORE_FUSION: False
+    IMG_WEIGHT: 0.3
+    POINT_WEIGHT: 0.3
+    FUSION_WEIGHT: 0.4
     TARGET_CONFIG:
       GT_EXTRA_WIDTH: [ 0.2, 0.2, 0.2 ]
       BOX_CODER: PointResidual_BinOri_Coder
@@ -71,7 +77,6 @@ MODEL:
       LOSS_REG: WeightedSmoothL1Loss
       CORNER_LOSS_REGULARIZATION: True
       CENTERNESS_REGULARIZATION: True
-      POINT_BOX_REG: "diou"
       LOSS_WEIGHTS: {
         'point_cls_weight': 1.0,
         'point_box_weight': 1.0,
@@ -94,7 +99,7 @@ MODEL:
       NMS_POST_MAXSIZE: 500
 
 OPTIMIZATION:
-  BATCH_SIZE_PER_GPU: 12
+  BATCH_SIZE_PER_GPU: 8
   NUM_EPOCHS: 120
 
   OPTIMIZER: adam_onecycle
